@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chinwag Chat Screenshot</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #111;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+      }
+
+      .phone {
+        width: 390px;
+        height: 844px;
+        overflow: hidden;
+        background: #ece5dd;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%23d9d2cb' fill-opacity='0.35'%3E%3Cpath d='M20 18h8v8h-8zM70 48h6v6h-6zM40 82h7v7h-7zM92 22h5v5h-5zM12 62h6v6h-6zM58 12h5v5h-5z'/%3E%3C/g%3E%3C/svg%3E");
+        position: relative;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .chat {
+        flex: 1;
+        padding: 18px 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow: hidden;
+      }
+
+      .chat-fill {
+        flex: 1;
+      }
+
+      .row {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        max-width: 100%;
+      }
+
+      .row.received {
+        justify-content: flex-start;
+      }
+
+      .row.sent {
+        justify-content: flex-end;
+      }
+
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #cfd4da, #aeb6bf);
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .avatar::after {
+        content: "";
+        position: absolute;
+        inset: 7px 8px auto;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #8e98a3;
+      }
+
+      .avatar::before {
+        content: "";
+        position: absolute;
+        left: 4px;
+        right: 4px;
+        bottom: 3px;
+        height: 11px;
+        border-radius: 10px 10px 4px 4px;
+        background: #8e98a3;
+      }
+
+      .bubble-wrap {
+        max-width: 78%;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .bubble {
+        padding: 8px 10px 6px;
+        border-radius: 14px;
+        font-size: 15px;
+        line-height: 1.35;
+        letter-spacing: -0.01em;
+        box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.08);
+        position: relative;
+        word-wrap: break-word;
+      }
+
+      .received .bubble {
+        background: #ffffff;
+        color: #111b21;
+        border-top-left-radius: 4px;
+      }
+
+      .sent .bubble {
+        background: #dcf8c6;
+        color: #111b21;
+        border-top-right-radius: 4px;
+      }
+
+      .meta {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+        margin-top: 2px;
+        padding-right: 2px;
+      }
+
+      .time {
+        font-size: 11px;
+        color: #667781;
+        line-height: 1;
+      }
+
+      .checks {
+        width: 16px;
+        height: 11px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .checks svg {
+        display: block;
+      }
+
+      .voice {
+        min-width: 220px;
+        padding: 8px 10px 6px;
+        display: grid;
+        grid-template-columns: 28px 1fr auto;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .play-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #00a884;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .received .play-btn {
+        background: #8696a0;
+      }
+
+      .play-btn svg {
+        margin-left: 2px;
+      }
+
+      .waveform {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        height: 24px;
+        overflow: hidden;
+      }
+
+      .bar {
+        width: 2px;
+        border-radius: 2px;
+        background: #8696a0;
+        opacity: 0.85;
+      }
+
+      .sent .bar {
+        background: #4f8f6f;
+      }
+
+      .duration {
+        font-size: 11px;
+        color: #667781;
+        white-space: nowrap;
+        padding-top: 8px;
+        align-self: start;
+      }
+
+      .spacer {
+        width: 28px;
+        flex-shrink: 0;
+      }
+
+      .typing-bar {
+        padding: 8px 10px 14px;
+        background: linear-gradient(
+          180deg,
+          transparent,
+          color-mix(in srgb, #ece5dd 65%, transparent) 18%,
+          #ece5dd 55%
+        );
+      }
+
+      .typing-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+      }
+
+      .typing-bubble {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #ffffff;
+        border-radius: 14px;
+        border-top-left-radius: 4px;
+        padding: 10px 12px;
+        box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.08);
+      }
+
+      .typing-label {
+        font-size: 13px;
+        color: #667781;
+        font-style: italic;
+      }
+
+      .typing-dots {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .typing-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #8696a0;
+        animation: typing-bounce 1.2s infinite ease-in-out;
+      }
+
+      .typing-dots span:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+
+      .typing-dots span:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+
+      @keyframes typing-bounce {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.45;
+        }
+        30% {
+          transform: translateY(-3px);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="phone" id="capture">
+      <div class="chat">
+        <div class="row received">
+          <div class="avatar" aria-hidden="true"></div>
+          <div class="bubble-wrap">
+            <div class="bubble">
+              Hey! Just matched randomly on Chinwag  How are you?
+            </div>
+            <div class="meta"><span class="time">15:48</span></div>
+          </div>
+        </div>
+
+        <div class="row sent">
+          <div class="bubble-wrap">
+            <div class="bubble">Hi! Pretty good here. You?</div>
+            <div class="meta">
+              <span class="time">15:49</span>
+              <span class="checks" aria-hidden="true">
+                <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
+                  <path
+                    d="M11.071 0.653a.75.75 0 0 1 1.128.098l2.568 3.256a.75.75 0 0 1-.098 1.128l-7.25 5.75a.75.75 0 0 1-.94 0L.431 6.403a.75.75 0 0 1 .94-1.175l4.25 3.375 6.45-5.12z"
+                    fill="#53bdeb"
+                  />
+                  <path
+                    d="M14.071 0.653a.75.75 0 0 1 1.128.098l2.568 3.256a.75.75 0 0 1-.098 1.128l-9.25 7.25a.75.75 0 0 1-.94 0l-1.25-1a.75.75 0 0 1 .94-1.175l.81.648 8.45-6.62z"
+                    fill="#53bdeb"
+                  />
+                </svg>
+              </span>
+            </div>
+          </div>
+          <div class="spacer" aria-hidden="true"></div>
+        </div>
+
+        <div class="row received">
+          <div class="avatar" aria-hidden="true"></div>
+          <div class="bubble-wrap">
+            <div class="bubble voice">
+              <div class="play-btn" aria-hidden="true">
+                <svg width="10" height="12" viewBox="0 0 10 12" fill="none">
+                  <rect x="1" y="1" width="3" height="10" rx="1" fill="#fff" />
+                  <rect x="6" y="1" width="3" height="10" rx="1" fill="#fff" />
+                </svg>
+              </div>
+              <div class="waveform" id="wave-left-1"></div>
+              <span class="duration">0:42</span>
+            </div>
+            <div class="meta"><span class="time">15:50</span></div>
+          </div>
+        </div>
+
+        <div class="row received">
+          <div class="avatar" aria-hidden="true"></div>
+          <div class="bubble-wrap">
+            <div class="bubble voice">
+              <div class="play-btn" aria-hidden="true">
+                <svg width="10" height="12" viewBox="0 0 10 12" fill="none">
+                  <rect x="1" y="1" width="3" height="10" rx="1" fill="#fff" />
+                  <rect x="6" y="1" width="3" height="10" rx="1" fill="#fff" />
+                </svg>
+              </div>
+              <div class="waveform" id="wave-left-2"></div>
+              <span class="duration">0:33</span>
+            </div>
+            <div class="meta"><span class="time">15:55</span></div>
+          </div>
+        </div>
+
+        <div class="row sent">
+          <div class="bubble-wrap">
+            <div class="bubble voice">
+              <div class="play-btn" aria-hidden="true">
+                <svg width="10" height="12" viewBox="0 0 10 12" fill="none">
+                  <path d="M2 1.5v9l8-4.5-8-4.5z" fill="#fff" />
+                </svg>
+              </div>
+              <div class="waveform" id="wave-right"></div>
+              <span class="duration">0:23</span>
+            </div>
+            <div class="meta">
+              <span class="time">15:56</span>
+              <span class="checks" aria-hidden="true">
+                <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
+                  <path
+                    d="M11.071 0.653a.75.75 0 0 1 1.128.098l2.568 3.256a.75.75 0 0 1-.098 1.128l-7.25 5.75a.75.75 0 0 1-.94 0L.431 6.403a.75.75 0 0 1 .94-1.175l4.25 3.375 6.45-5.12z"
+                    fill="#53bdeb"
+                  />
+                  <path
+                    d="M14.071 0.653a.75.75 0 0 1 1.128.098l2.568 3.256a.75.75 0 0 1-.098 1.128l-9.25 7.25a.75.75 0 0 1-.94 0l-1.25-1a.75.75 0 0 1 .94-1.175l.81.648 8.45-6.62z"
+                    fill="#53bdeb"
+                  />
+                </svg>
+              </span>
+            </div>
+          </div>
+          <div class="avatar" aria-hidden="true"></div>
+        </div>
+
+        <div class="row received">
+          <div class="avatar" aria-hidden="true"></div>
+          <div class="bubble-wrap">
+            <div class="bubble">
+              I'm from Delhi and love traveling to new places. What do you enjoy
+              doing?
+            </div>
+            <div class="meta"><span class="time">15:58</span></div>
+          </div>
+        </div>
+
+        <div class="row sent">
+          <div class="bubble-wrap">
+            <div class="bubble">That's cool! I'm into music and hiking mostly. </div>
+            <div class="meta">
+              <span class="time">15:59</span>
+              <span class="checks" aria-hidden="true">
+                <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
+                  <path
+                    d="M11.071 0.653a.75.75 0 0 1 1.128.098l2.568 3.256a.75.75 0 0 1-.098 1.128l-7.25 5.75a.75.75 0 0 1-.94 0L.431 6.403a.75.75 0 0 1 .94-1.175l4.25 3.375 6.45-5.12z"
+                    fill="#53bdeb"
+                  />
+                  <path
+                    d="M14.071 0.653a.75.75 0 0 1 1.128.098l2.568 3.256a.75.75 0 0 1-.098 1.128l-9.25 7.25a.75.75 0 0 1-.94 0l-1.25-1a.75.75 0 0 1 .94-1.175l.81.648 8.45-6.62z"
+                    fill="#53bdeb"
+                  />
+                </svg>
+              </span>
+            </div>
+          </div>
+          <div class="spacer" aria-hidden="true"></div>
+        </div>
+
+        <div class="row received">
+          <div class="avatar" aria-hidden="true"></div>
+          <div class="bubble-wrap">
+            <div class="bubble">
+              Chinwag actually feels pretty safe compared to other random chat apps.
+            </div>
+            <div class="meta"><span class="time">16:01</span></div>
+          </div>
+        </div>
+
+        <div class="row sent">
+          <div class="bubble-wrap">
+            <div class="bubble">Yeah same here. Real people, no weird bots.</div>
+            <div class="meta">
+              <span class="time">16:02</span>
+              <span class="checks" aria-hidden="true">
+                <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
+                  <path
+                    d="M11.071 0.653a.75.75 0 0 1 1.128.098l2.568 3.256a.75.75 0 0 1-.098 1.128l-7.25 5.75a.75.75 0 0 1-.94 0L.431 6.403a.75.75 0 0 1 .94-1.175l4.25 3.375 6.45-5.12z"
+                    fill="#53bdeb"
+                  />
+                  <path
+                    d="M14.071 0.653a.75.75 0 0 1 1.128.098l2.568 3.256a.75.75 0 0 1-.098 1.128l-9.25 7.25a.75.75 0 0 1-.94 0l-1.25-1a.75.75 0 0 1 .94-1.175l.81.648 8.45-6.62z"
+                    fill="#53bdeb"
+                  />
+                </svg>
+              </span>
+            </div>
+          </div>
+          <div class="spacer" aria-hidden="true"></div>
+        </div>
+
+        <div class="row received">
+          <div class="avatar" aria-hidden="true"></div>
+          <div class="bubble-wrap">
+            <div class="bubble">
+              You can skip anytime too, so it never feels stuck or unsafe.
+            </div>
+            <div class="meta"><span class="time">16:03</span></div>
+          </div>
+        </div>
+
+        <div class="row sent">
+          <div class="bubble-wrap">
+            <div class="bubble">That's why I trust Chinwag for quick chats.</div>
+            <div class="meta">
+              <span class="time">16:04</span>
+              <span class="checks" aria-hidden="true">
+                <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
+                  <path
+                    d="M11.071 0.653a.75.75 0 0 1 1.128.098l2.568 3.256a.75.75 0 0 1-.098 1.128l-7.25 5.75a.75.75 0 0 1-.94 0L.431 6.403a.75.75 0 0 1 .94-1.175l4.25 3.375 6.45-5.12z"
+                    fill="#53bdeb"
+                  />
+                  <path
+                    d="M14.071 0.653a.75.75 0 0 1 1.128.098l2.568 3.256a.75.75 0 0 1-.098 1.128l-9.25 7.25a.75.75 0 0 1-.94 0l-1.25-1a.75.75 0 0 1 .94-1.175l.81.648 8.45-6.62z"
+                    fill="#53bdeb"
+                  />
+                </svg>
+              </span>
+            </div>
+          </div>
+          <div class="spacer" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="typing-bar">
+        <div class="typing-row">
+          <div class="avatar" aria-hidden="true"></div>
+          <div class="typing-bubble">
+            <span class="typing-label">typing</span>
+            <span class="typing-dots" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function buildWaveform(id, seed, count = 34) {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        for (let i = 0; i < count; i += 1) {
+          const bar = document.createElement("span");
+          bar.className = "bar";
+          const height = 6 + ((seed + i * 17) % 18);
+          bar.style.height = `${height}px`;
+          el.appendChild(bar);
+        }
+      }
+
+      buildWaveform("wave-left-1", 11);
+      buildWaveform("wave-left-2", 23);
+      buildWaveform("wave-right", 37, 30);
+    </script>
+  </body>
+</html>
