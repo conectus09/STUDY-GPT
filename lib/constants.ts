@@ -10,6 +10,7 @@ export const LEGAL_LAST_UPDATED = "17 June 2026";
 
 export const MATCH_POLL_INTERVAL_MS = 800;
 export const MATCH_BURST_POLL_MS = 400;
+export const CHAT_POLL_INTERVAL_MS = 1200;
 export const CHAT_TOPIC = "chinwag-chat";
 export const SYSTEM_TOPIC = "chinwag-system";
 export const TYPING_IDLE_MS = 1500;
@@ -20,7 +21,17 @@ export const REDIS_KEYS = {
   queue: "chinwag:queue",
   user: (userId: string) => `chinwag:user:${userId}`,
   profile: (userId: string) => `chinwag:profile:${userId}`,
+  roomMessages: (roomId: string) => `chinwag:room:${roomId}:messages`,
+  roomTyping: (roomId: string, userId: string) =>
+    `chinwag:room:${roomId}:typing:${userId}`,
 } as const;
+
+export interface ChatMessagePayload {
+  id: string;
+  sender: string;
+  text: string;
+  timestamp: number;
+}
 
 export interface PublicUserProfile {
   name: string;

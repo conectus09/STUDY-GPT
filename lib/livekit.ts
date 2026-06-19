@@ -1,5 +1,14 @@
 import { AccessToken } from "livekit-server-sdk";
 
+/** True when production/local LiveKit env vars are all present. */
+export function isLiveKitConfigured(): boolean {
+  return Boolean(
+    process.env.LIVEKIT_API_KEY &&
+      process.env.LIVEKIT_API_SECRET &&
+      (process.env.NEXT_PUBLIC_LIVEKIT_URL ?? process.env.LIVEKIT_URL),
+  );
+}
+
 export async function createLiveKitToken(
   roomName: string,
   participantName: string,

@@ -1,0 +1,138 @@
+import { nanoid } from "nanoid";
+import { type ChatMessagePayload, REDIS_KEYS } from "./constants";
+import { getRedis } from "./redis";
+
+const ROOM_TTL_SECONDS = 7200;
+const MAX_MESSAGES_PER_ROOM = 200;
+const TYPING_TTL_SECONDS = 5;
+
+declare global {
+  // eslint-disable-next-line no-var
+  var chinwagFallbackChatStore:
+    | Map<
+        string,
+        {
+          messages: ChatMessagePayload[];
+          typing: Map<string, { active: boolean; updatedAt: number }>;
+        }
+      >
+    | undefined;
+}
+
+const memoryStore =
+  global.chinwagFallbackChatStore ??
+  (global.chinwagFallbackChatStore = new Map());
+
+function getMemoryRoom(roomId: string) {
+  let room = memoryStore.get(roomId);
+  if (!room) {
+    room = { messages: [], typing: new Map() };
+    memoryStore.set(roomId, room);
+  }
+  return room;
+}
+
+function parseMessage(raw: string): ChatMessagePayload | null {
+  try {
+    const parsed = JSON.parse(raw) as ChatMessagePayload;
+    if (
+      typeof parsed.id === "string" &&
+      typeof parsed.sender === "string" &&
+      typeof parsed.text === "string" &&
+      typeof parsed.timestamp === "number"
+    ) {
+      return parsed;
+    }
+  } catch {
+    // ignore malformed entries
+  }
+  return null;
+}
+
+export async function addChatMessage(
+  roomId: string,
+  sender: string,
+  text: string,
+): Promise<ChatMessagePayload> {
+  const message: ChatMessagePayload = {
+    id: `${sender}-${nanoid(10)}`,
+    sender,
+    text: text.trim(),
+    timestamp: Date.now(),
+  };
+
+  const redis = getRedis();
+  if (redis) {
+    const key = REDIS_KEYS.roomMessages(roomId);
+    await redis.rpush(key, JSON.stringify(message));
+    await redis.ltrim(key, -MAX_MESSAGES_PER_ROOM, -1);
+    await redis.expire(key, ROOM_TTL_SECONDS);
+    return message;
+  }
+
+  const room = getMemoryRoom(roomId);
+  room.messages.push(message);
+  if (room.messages.length > MAX_MESSAGES_PER_ROOM) {
+    room.messages.splice(0, room.messages.length - MAX_MESSAGES_PER_ROOM);
+  }
+  return message;
+}
+
+export async function getChatMessagesSince(
+  roomId: string,
+  since: number,
+): Promise<ChatMessagePayload[]> {
+  const redis = getRedis();
+  if (redis) {
+    const key = REDIS_KEYS.roomMessages(roomId);
+    const rawMessages = await redis.lrange(key, 0, -1);
+    return rawMessages
+      .map(parseMessage)
+      .filter((message): message is ChatMessagePayload => message !== null)
+      .filter((message) => message.timestamp > since);
+  }
+
+  return getMemoryRoom(roomId).messages.filter(
+    (message: ChatMessagePayload) => message.timestamp > since,
+  );
+}
+
+export async function setChatTyping(
+  roomId: string,
+  userId: string,
+  active: boolean,
+): Promise<void> {
+  const redis = getRedis();
+  if (redis) {
+    const key = REDIS_KEYS.roomTyping(roomId, userId);
+    if (active) {
+      await redis.set(key, "1", "EX", TYPING_TTL_SECONDS);
+    } else {
+      await redis.del(key);
+    }
+    return;
+  }
+
+  const room = getMemoryRoom(roomId);
+  if (active) {
+    room.typing.set(userId, { active: true, updatedAt: Date.now() });
+  } else {
+    room.typing.delete(userId);
+  }
+}
+
+export async function isPartnerTyping(
+  roomId: string,
+  partnerId: string,
+): Promise<boolean> {
+  const redis = getRedis();
+  if (redis) {
+    const key = REDIS_KEYS.roomTyping(roomId, partnerId);
+    return (await redis.exists(key)) === 1;
+  }
+
+  const entry = getMemoryRoom(roomId).typing.get(partnerId);
+  if (!entry?.active) return false;
+
+  return Date.now() - entry.updatedAt < TYPING_TTL_SECONDS * 1000;
+}
